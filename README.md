@@ -6,8 +6,6 @@ This repository contains Python scripts for performing Serbian Speech-to-Text (S
 
 ### `split_audio.py`
 
-*(Description of `split_audio.py` and its functionality would go here.  Since you didn't provide the code for this script, I'll add a placeholder.  Please replace this with the actual information about how to use `split_audio.py`)*
-
 This script is used to split longer audio files into smaller chunks, which can improve the accuracy and efficiency of the transcription process.  It takes [describe the input, e.g., a long audio file] as input and outputs [describe the output, e.g., a folder of smaller audio files].
 
 **Usage:**
