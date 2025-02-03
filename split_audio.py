@@ -4,9 +4,11 @@ import subprocess
 
 def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
     """Splits an MP3 file into chunks using only ffmpeg."""
-
     try:
-        # 1. Get total duration using ffprobe (part of ffmpeg)
+        # Get the base name of the input file (without extension)
+        base_name = os.path.splitext(os.path.basename(input_file))[0]
+        
+        # Get total duration using ffprobe
         command = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", input_file]
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         total_duration = float(result.stdout)
@@ -18,8 +20,9 @@ def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
 
         while start_time < total_duration:
             end_time = min(start_time + chunk_duration, total_duration)
-
-            output_file = os.path.join(output_dir, f"chunk_{chunk_number}.wav")
+            
+            # Name the output file as <original_filename>_chunk_<number>.wav
+            output_file = os.path.join(output_dir, f"{base_name}_chunk_{chunk_number}.wav")
 
             command = [
                 "ffmpeg",
@@ -31,12 +34,11 @@ def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
             ]
 
             subprocess.run(command, check=True)
-
             print(f"Saved chunk {chunk_number}: {output_file}")
 
             start_time = end_time
             chunk_number += 1
-
+    
     except FileNotFoundError:
         print(f"Error: Input file '{input_file}' not found.")
     except subprocess.CalledProcessError as e:
