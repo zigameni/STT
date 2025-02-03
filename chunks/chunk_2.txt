@@ -1,1 +1,63 @@
- koji ćemo prevesti u objektni format, u elf format, a onda ćemo taj elf prevesti u Intel Hex. Napravit ćemo zasevan direktorium u koje ćemo smješati se fileove koji se tiču pravljenja jednog Hex filea. Taj direktorium može da se zove main i u okviru njega ćemo napisati taj prvi jednostavni programčić. On se sastoji od nekoliko promeljivih, neka to na primer bude neka intidžerska promeljiva, sa na primer vrednošću 7. Možemo da dodamo i jednu nepromeljivu, neka bude vrednost na primer 6. Možemo da dodamo i makropromeljivu, sa na primer vrednošću 5. I nekakvu neinicializovanu promeljivu koja u stadu sa svojim imenom nema početnu vrednost. Dok će program biti krajnje jednostavan, sadržat će samo dodelu vrednosti ovoj promeljivoj neinicializovanu i to će biti izbir ovih preostalih promeljivi. Dakle, nepromeljive i promeljive. Ovoj file ćemo sačuvati u okviru direktorijuma main i to kao main.c. Sad ćemo probati da prevedemo ovoj file main.c, da od njega dobimo objektni file, što način ćemo i main.c prevesti i asemblirati bez ikakog povezivanja, a onda ćemo od tog rezultućeg objektnoj file napraviti hex file. Da bi smo to ostigli, iskoristit ćemo gcc prevodilac i zato ćemo koristiti omanu liniju. Na ovom mestu ćemo otvoriti omanu liniju i pozvećemo odma gcc koji zna da prevede nekakav uvijednog liniju. Zato ćemo izvorni kod na ovoj x86 masini za arm masinu, to jest koristit ćemo jedan cross compiler. Njegovo ime je arm non eabgcc, a argumenti koje treba damo zadamo je su sledeći. Pošto smo reklji, da ćemo vršiti samo prevođenje i asemblirati bez linj, to je povezivanja, iskoristit ćemo ovu opciju minus c svakako. Ono što ćemo još od opcija dodati, je su opcije koje govore da se zaista radi o konkretnom armovom jezguru koje će se koristiti na ovom kursu, to je Cortex M3 i instrukcijskom setu tam, to su još neke opcije koje ćemo navesti. Tako da ćemo onda reći minus c, da bi imali prevođenje i asembliranje bez povezivanja, reći ćemo opciju M i CPU da je Cortex M3, to je jezgu koje se nalazi u onom našom mikrocontrolleru. Reći ćemo da se koristi instrukcijski set tam, reći ćemo da se izlaz naziva, takle sa minus o opcijom main.o, jer je u pitanju objekni file, dok je ulaz main.c. Nakon prevođenja, ovo ga možemo da vidimo šta je rezultat. Rezultat ovoj prevođenja i asembliranja jeste ovaj objekni file uskladu sa elf formatom, tako da njega sada možemo onda pretvoriti u hex. Alat koji ćemo za to koristiti naziva se arm non eabi objeje copy ili object copy, tako da ćemo sada njega izkoristiti i vidjet ćemo koje opcije njemu treba zadati. Njegova sintaksa zapozivanje jeste sledeća, nakon samog naziva moguće navjesti opcije, a zatim sledi ime ulaznog filea i na kraju ime izlaznog filea. Obće koje još nama jeste neopodna, jeste ovaj output target, da bi smo navjeli u kom tačno formatu treba da bude izlz. Rekli smo, ovaj intel hex format koji mi koristimo je jedan od različitih hex formata koji postoje. Podržani formati u ovom slučaju su sluči ovoga lata objeje copy su navjedeni na ovom ovde mestu i mi ćemo koristiti i hex što je oznaka za intel hex. Što znači, da ćemo k komandu reći minus o pa zatim i hex za naziv formata izlaznog filea. Zatim navodimo ulazni file, to je main.o i još ćemo navisti kako želimo da se zove izlaz, neka to bude main.hex. I u ovom trenutku bi trebalo da imamo napravljen jedan hex file, to je ovaj ovde. I u njemu bi trebalo da možemo da prepoznamo neke elemente našeg programa koji smo napisali na cev. Ono što odma možemo da prepoznamo, jeste da imamo deo sa mašinskim kodom koji prestavlja instrukcije koje će obezbediti da se izvrši ovo ovde sabiranje. Kao i da se ovde nalazi promenljiva či je vrednost 7, kao i ne promenljiva či je vrednost 6. Druga stvar koji u bi trebalo primjetiti, jeste da se nogi od ovih stvari nalaze na istim adresama. Promenljiva 7 se nalazi na adresi 0, kao što se i ne promenljiva 6 takođe nalazi na adresi 0, kao i sam početak ovog programskog koda. Razlog za tako nesto, jeste to što nismo napisali odgovarajuću linkersku skriptu, nismo čak ni pozvali linker kojem bi smo rekli šta gde treba da smesti i ovo je podrazumevan i razmeštaj sekcija iz assemblersko koda. Z toga ćemo sada polako krenuti ka tome da napišemo prvu linkersku skriptu, a pre toga ćemo proči kroz ovaj proces prevođenja, korak po korak da bi smo videli kako izleda izvorni assemblerski kod do koeg dolazi GCC kao prevodilac. Da onda u tom izvornom assemblerskom kodu prepoznamo koje su to osnovne jedinice sa kojima možemo baratati u linkeru. Pre nego što pređemo na prvi korak u lancu prevođenja, zatvorit ćemo ovaj program.hex pošto nam je suvišan kao i ove direktorijome Alate i Bin i Proteus koji više nećemo u ove lekcii koristiti, a fokusirajemo se na predprocesiranje ovog ovde filea. Dakle prva stvar koji ćemo uraditi jeste da izvošimo predprocesiranje main.c izvornog koda. Komanda koja nam treba za to jeste arm non-eAbi GCC sa sledećom opcijom. Dakle želimo samo predprocesiranje opcija za tako nešto jeste minus e. Pa ćemo onda z toga reći da je izlozni file koji želimo main.i od intermediate, da je ulozni file main.c i da želimo samo predprocesiranje. Resultat predprocesiranja i trebalo da je kranji jednostavniji očekio, to je ovada petica koja se ekspandovala zbog ovog ovde macroa macro. Narani korak u lancu prevođenja, jeste da od ovog intermediate filea
+
+# Prevođenje programa u HEX format
+
+Da bismo dobili HEX fajl, neophodno nam je da imamo ELF fajl koji možemo pretvoriti u odgovarajući HEX fajl. Zato ćemo prvo krenuti od pisanja jednostavnog programa koji ćemo prevesti u objektni format, odnosno u ELF format, a zatim ćemo taj ELF fajl pretvoriti u Intel Hex format.
+
+## Kreiranje direktorijuma i pisanje programa
+
+Prvo ćemo napraviti zaseban direktorijum u koji ćemo smestiti fajlove vezane za pravljenje HEX fajla. Taj direktorijum možemo nazvati `main`, i u okviru njega ćemo napisati naš prvi jednostavni program. Program će se sastojati od nekoliko promenljivih:
+
+- Jedna celobrojna promenljiva (`int`) sa vrednošću 7.
+- Jedna nepromenljiva vrednost (`const`) sa vrednošću 6.
+- Jedna makro promenljiva sa vrednošću 5.
+- Jedna neinicijalizovana promenljiva koja nema početnu vrednost.
+
+Program će biti krajnje jednostavan i sastojaće se samo od dodele vrednosti neinicializovanoj promenljivoj, koristeći vrednosti ostalih promenljivih. Ovaj fajl ćemo sačuvati u direktorijumu `main` pod nazivom `main.c`.
+
+## Prevođenje programa u objektni fajl
+
+Sada ćemo pokušati da prevedemo fajl `main.c` u objektni fajl. To ćemo uraditi tako što ćemo prevesti i asemblovati `main.c` bez povezivanja, a zatim ćemo od rezultujućeg objektnog fajla napraviti HEX fajl.
+
+Da bismo to postigli, koristićemo GCC prevodilac. Otvorićemo terminal i pozvaćemo GCC sa odgovarajućim opcijama. Pošto ćemo prevoditi kod za ARM arhitekturu, koristićemo cross-compiler `arm-none-eabi-gcc`. Argumenti koje treba da prosledimo su sledeći:
+
+- `-c`: Da bismo izvršili samo prevođenje i asembliranje bez povezivanja.
+- `-mcpu=cortex-m3`: Da bismo naznačili da se radi o Cortex-M3 jezgru koje se koristi na ovom kursu.
+- `-o main.o`: Da bismo definisali izlazni fajl kao `main.o`, dok je ulazni fajl `main.c`.
+
+Nakon prevođenja, rezultat će biti objektni fajl u ELF formatu, koji ćemo zatim pretvoriti u HEX fajl.
+
+## Pretvaranje ELF u HEX format
+
+Za pretvaranje ELF fajla u HEX format, koristićemo alat `arm-none-eabi-objcopy`. Sintaksa za ovu komandu je sledeća:
+
+```bash
+arm-none-eabi-objcopy -O ihex main.o main.hex
+```
+
+Ova komanda će pretvoriti `main.o` u `main.hex` koristeći Intel Hex format. Nakon izvršavanja ove komande, trebalo bi da imamo napravljen HEX fajl.
+
+## Analiza HEX fajla
+
+U HEX fajlu možemo prepoznati neke elemente našeg programa. Na primer, mašinski kod koji predstavlja instrukcije za sabiranje, kao i vrednosti promenljivih (7 i 6). Međutim, primetićemo da se neke od ovih vrednosti nalaze na istim adresama, što je posledica toga što nismo definisali odgovarajuću linkersku skriptu niti smo pozvali linker koji bi odredio gde treba smestiti pojedine sekcije.
+
+## Sledeći koraci: Linkerska skripta
+
+Pre nego što pređemo na pisanje prve linkerske skripte, proći ćemo kroz proces prevođenja korak po korak kako bismo bolje razumeli kako GCC prevodi izvorni kod u asemblerski kod. To će nam pomoći da prepoznamo osnovne jedinice sa kojima možemo baratati u linkeru.
+
+## Predprocesiranje izvornog koda
+
+Prvi korak u lancu prevođenja je predprocesiranje izvornog koda. Za to ćemo koristiti sledeću komandu:
+
+```bash
+arm-none-eabi-gcc -E main.c -o main.i
+```
+
+Ova komanda će izvršiti samo predprocesiranje i rezultat će biti smešten u `main.i`. Nakon predprocesiranja, očekujemo da će makroi biti ekspandirani, što će rezultirati jednostavnijim kodom.
+
+## Nastavak prevođenja
+
+Nakon predprocesiranja, sledeći korak je prevođenje predprocesiranog koda u asemblerski kod, a zatim u objektni fajl. Ovaj proces ćemo detaljno analizirati kako bismo bolje razumeli kako se izvorni kod pretvara u mašinski kod.
+
+---
+
+Ovim smo završili prvi deo procesa prevođenja i pripreme za pravljenje HEX fajla. U narednim koracima ćemo se fokusirati na pisanje linkerske skripte i dalju analizu procesa prevođenja.
