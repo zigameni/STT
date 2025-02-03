@@ -90,7 +90,7 @@ Contributions are welcome!  Please open an issue or submit a pull request.
 
 ## Pro tip :P
 
-1. You can you a light weight model, such as base, and take the output and copy-paste it into Deepseek, asking it to format it for you. Check out `Prompt.txt` as an example.
+1. You can you use a lightweight model, such as base, and take the output and copy-paste it into Deepseek, asking it to format it for you. Check out `Prompt.txt` as an example.
 
 2. If your audio is to big, you can use `split_audio.py` which will by default split the audio into chunks of 10 mins, and store them into a folder callled `chunks`, using the `main_script.py` you can transcribe the entire folder.  
  
