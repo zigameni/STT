@@ -1,4 +1,4 @@
-The following is part of a transcription of a lecture on Microprocessors, mainly the usage of Proteus. The language is in serbian, so the fix should also be in serbian. The transcription was done using openai-whisper. Can you please fix the grammer and the overall mistakes, correct grammar, improve sentence structure, and clarify the meaning where necessary, Please format it using Markdown:
+The following is part of a transcription of a lecture on Concurrent and Distributed ProgrammkingThe language is in serbian, so the fix should also be in serbian latin. The transcription was done using openai-whisper. Can you please fix the grammer and the overall mistakes, correct grammar, improve sentence structure, and clarify the meaning where necessary, Please format it using Markdown:
 
 
 

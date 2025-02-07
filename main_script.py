@@ -1,89 +1,88 @@
-import whisper
-import sys
-from pathlib import Path
 import os
+import argparse
+import subprocess
+import whisper
+from pathlib import Path
 
-def transcribe_audio(audio_path_str):
-    """Transcribes audio (MP3 or WAV)."""
+def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
+    """Splits an MP3 file into chunks using ffmpeg."""
     try:
-        audio_path = Path(audio_path_str)
-        print(f"Processing file: {audio_path}")
+        base_name = os.path.splitext(os.path.basename(input_file))[0]
+        command = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", input_file]
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        total_duration = float(result.stdout)
+        
+        os.makedirs(output_dir, exist_ok=True)
 
-        if not audio_path.exists():
-            raise FileNotFoundError(f"Could not find audio file at: {audio_path}")
+        start_time = 0
+        chunk_number = 1
+        chunk_paths = []
 
-        if audio_path.suffix.lower() not in ['.mp3', '.wav']:
-            raise ValueError("Invalid audio format. Only MP3 and WAV are supported.")
+        while start_time < total_duration:
+            end_time = min(start_time + chunk_duration, total_duration)
+            output_file = os.path.join(output_dir, f"{base_name}_chunk_{chunk_number}.wav")
 
-        print("Loading Whisper model...")
-        model = whisper.load_model("small")
-
-        print("Transcribing audio...")
-        result = model.transcribe(str(audio_path), language="sr", task="transcribe")
-
-        return result
-
-    except FileNotFoundError as e:
-        print(f"File not found error: {str(e)}")
-        return None
-    except ValueError as e:
-        print(f"Invalid audio format error: {str(e)}")
-        return None
+            command = [
+                "ffmpeg", "-i", input_file, "-ss", str(start_time), "-to", str(end_time), "-c:a", "pcm_s16le", output_file
+            ]
+            subprocess.run(command, check=True)
+            chunk_paths.append(output_file)
+            print(f"Saved chunk {chunk_number}: {output_file}")
+            
+            start_time = end_time
+            chunk_number += 1
+        
+        return chunk_paths
     except Exception as e:
-        print(f"Error during transcription: {str(e)}")
-        print(f"Full error type: {type(e)}")
+        print(f"Error: {e}")
+        return []
+
+def transcribe_audio(audio_path):
+    """Transcribes a WAV file using Whisper."""
+    try:
+        model = whisper.load_model("small")
+        result = model.transcribe(str(audio_path), language="sr", task="transcribe")
+        return result["text"]
+    except Exception as e:
+        print(f"Error during transcription: {e}")
         return None
 
-def process_file_or_folder(path_str):
-    """Processes either a single audio file or a folder of audio files."""
-    path = Path(path_str)
-
-    if path.is_file():
-        if path.suffix.lower() not in ['.mp3', '.wav']:
-            print("Error: File must be an MP3 or WAV")
-            return
-
-        result = transcribe_audio(path_str)
-        if result:
-            output_path = path.with_suffix('.txt')
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(result["text"])
-            print(f"\nTranscription saved to: {output_path}")
-
-            # Check if language_probability exists before printing
-            if 'language_probability' in result:  # The crucial fix
-                print(f"Language detection confidence: {result['language_probability']:.2%}")
-            else:
-                print("Language detection confidence not available.")
-
-    elif path.is_dir():
-        for file in path.iterdir():
-            if file.is_file() and file.suffix.lower() in ['.mp3', '.wav']:
-                print(f"Processing file in folder: {file}")
-                result = transcribe_audio(str(file))
-                if result:
-                    output_path = file.with_suffix('.txt')
-                    with open(output_path, 'w', encoding='utf-8') as f:
-                        f.write(result["text"])
-                    print(f"Transcription saved to: {output_path}")
-
-                    # Check if language_probability exists before printing (same fix here)
-                    if 'language_probability' in result:
-                        print(f"Language detection confidence: {result['language_probability']:.2%}")
-                    else:
-                        print("Language detection confidence not available.")
-    else:
-        print(f"Error: {path} is neither a file nor a directory.")
-
-
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <path_to_audio_file_or_folder>")
+def process_folder(input_folder, output_folder, chunk_duration):
+    """Processes all MP3 files in a folder: splits and transcribes them."""
+    if not os.path.isdir(input_folder):
+        print(f"Error: Input folder '{input_folder}' does not exist.")
         return
-
-    path_str = ' '.join(sys.argv[1:]).strip('"')
-    process_file_or_folder(path_str)
-
+    
+    os.makedirs(output_folder, exist_ok=True)
+    
+    for file_name in os.listdir(input_folder):
+        if file_name.lower().endswith(".mp3"):
+            input_file = os.path.join(input_folder, file_name)
+            file_output_dir = os.path.join(output_folder, os.path.splitext(file_name)[0])
+            os.makedirs(file_output_dir, exist_ok=True)
+            print(f"Processing {input_file}...")
+            
+            chunk_paths = split_mp3(input_file, file_output_dir, chunk_duration)
+            full_transcription = ""
+            
+            for chunk_path in chunk_paths:
+                transcription = transcribe_audio(chunk_path)
+                if transcription:
+                    full_transcription += transcription + "\n"
+            
+            if full_transcription:
+                transcript_file = os.path.join(file_output_dir, f"{os.path.splitext(file_name)[0]}.txt")
+                with open(transcript_file, 'w', encoding='utf-8') as f:
+                    f.write(full_transcription)
+                print(f"Transcription saved: {transcript_file}")
+    
+    print("All files processed.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Split and transcribe MP3 files in a folder.")
+    parser.add_argument("input_folder", help="Path to the input folder containing MP3 files.")
+    parser.add_argument("-o", "--output_folder", help="Directory to save chunks and transcriptions (default: 'output')", default="output")
+    parser.add_argument("-d", "--duration", help="Duration of each chunk in minutes (default: 10)", type=int, default=10)
+    
+    args = parser.parse_args()
+    process_folder(args.input_folder, args.output_folder, args.duration * 60)

@@ -5,7 +5,6 @@ import subprocess
 def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
     """Splits an MP3 file into chunks using only ffmpeg."""
     try:
-        # Get the base name of the input file (without extension)
         base_name = os.path.splitext(os.path.basename(input_file))[0]
         
         # Get total duration using ffprobe
@@ -20,8 +19,6 @@ def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
 
         while start_time < total_duration:
             end_time = min(start_time + chunk_duration, total_duration)
-            
-            # Name the output file as <original_filename>_chunk_<number>.wav
             output_file = os.path.join(output_dir, f"{base_name}_chunk_{chunk_number}.wav")
 
             command = [
@@ -47,17 +44,36 @@ def split_mp3(input_file, output_dir, chunk_duration=10 * 60):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-if __name__ == "__main__":  # This is the main part of the script
-    parser = argparse.ArgumentParser(description="Split an MP3 file into chunks.")
-    parser.add_argument("input_file", help="Path to the input MP3 file.")
-    parser.add_argument("-o", "--output_dir", help="Directory to save chunks (default: 'chunks')", default="chunks")
+
+def process_folder(input_folder, output_folder, chunk_duration):
+    """Processes all MP3 files in a folder."""
+    if not os.path.isdir(input_folder):
+        print(f"Error: Input folder '{input_folder}' does not exist.")
+        return
+    
+    os.makedirs(output_folder, exist_ok=True)
+    
+    for file_name in os.listdir(input_folder):
+        if file_name.lower().endswith(".mp3"):
+            input_file = os.path.join(input_folder, file_name)
+            file_output_dir = os.path.join(output_folder, os.path.splitext(file_name)[0])
+            os.makedirs(file_output_dir, exist_ok=True)
+            print(f"Processing {input_file}...")
+            split_mp3(input_file, file_output_dir, chunk_duration)
+    
+    print("All files processed.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Split all MP3 files in a folder into chunks.")
+    parser.add_argument("input_folder", help="Path to the input folder containing MP3 files.")
+    parser.add_argument("-o", "--output_folder", help="Directory to save chunks (default: 'chunks')", default="chunks")
     parser.add_argument("-d", "--duration", help="Duration of each chunk in minutes (default: 10)", type=int, default=10)
-
-    args = parser.parse_args()  # Parse command-line arguments
-
-    input_mp3 = args.input_file
-    output_dir = args.output_dir
+    
+    args = parser.parse_args()
+    
+    input_folder = args.input_folder
+    output_folder = args.output_folder
     chunk_duration = args.duration * 60  # Convert minutes to seconds
-
-    split_mp3(input_mp3, output_dir, chunk_duration)  # Call the splitting function
-    print("Splitting complete.")
+    
+    process_folder(input_folder, output_folder, chunk_duration)
